@@ -1,0 +1,403 @@
+{
+  "source": "https://21st.dev",
+  "last_updated": "2026-04-09",
+  "description": "Componentes más populares de 21st.dev clasificados para uso en landing pages",
+  "components": [
+    {
+      "nombre": "Spline Scene",
+      "popularidad": 942,
+      "categoria": "Heroes",
+      "estilo_visual": "3D interactivo / Inmersivo",
+      "problema_que_resuelve": "Captura atención inmediata en el hero con escenas 3D animadas que diferencian visualmente el producto"
+    },
+    {
+      "nombre": "Container Scroll Animation",
+      "popularidad": 835,
+      "categoria": "Heroes",
+      "estilo_visual": "Scroll parallax / Cinético",
+      "problema_que_resuelve": "Crea narrativa visual dinámica al hacer scroll, manteniendo al usuario enganchado mientras desciende por la página"
+    },
+    {
+      "nombre": "Animated Hero",
+      "popularidad": 824,
+      "categoria": "Heroes",
+      "estilo_visual": "Moderno / Animado",
+      "problema_que_resuelve": "Comunica el valor del producto en segundos con animaciones que guían la mirada hacia el CTA principal"
+    },
+    {
+      "nombre": "Aurora Background",
+      "popularidad": 781,
+      "categoria": "Backgrounds",
+      "estilo_visual": "Gradiente fluido / Dark mode",
+      "problema_que_resuelve": "Aporta profundidad visual y atmósfera premium sin distraer del contenido principal"
+    },
+    {
+      "nombre": "Sparkles",
+      "popularidad": 664,
+      "categoria": "Calls to Action",
+      "estilo_visual": "Partículas / Mágico",
+      "problema_que_resuelve": "Aumenta el atractivo del CTA con efectos de partículas que llaman la atención sin ser invasivos"
+    },
+    {
+      "nombre": "Background Paths",
+      "popularidad": 619,
+      "categoria": "Backgrounds",
+      "estilo_visual": "SVG animado / Minimalista técnico",
+      "problema_que_resuelve": "Añade movimiento sutil al fondo que transmite sensación de velocidad y modernidad tecnológica"
+    },
+    {
+      "nombre": "Shape Landing Hero",
+      "popularidad": 593,
+      "categoria": "Heroes",
+      "estilo_visual": "Geométrico / Abstracto",
+      "problema_que_resuelve": "Diferencia visualmente el hero con formas geométricas llamativas sin depender de fotografía"
+    },
+    {
+      "nombre": "Radial Orbital Timeline",
+      "popularidad": 566,
+      "categoria": "Features",
+      "estilo_visual": "Orbital / Espacial / Dark",
+      "problema_que_resuelve": "Presenta características o roadmap de forma visualmente única que destaca sobre listas aburridas"
+    },
+    {
+      "nombre": "Scroll Media Expansion Hero",
+      "popularidad": 541,
+      "categoria": "Heroes",
+      "estilo_visual": "Scroll-driven / Expansivo",
+      "problema_que_resuelve": "Revela el producto gradualmente al hacer scroll, generando curiosidad y aumentando el tiempo en página"
+    },
+    {
+      "nombre": "Lamp",
+      "popularidad": 529,
+      "categoria": "Heroes",
+      "estilo_visual": "Glow / Dark mode premium",
+      "problema_que_resuelve": "Crea un punto focal luminoso que dirige la atención al headline principal en landings oscuras"
+    },
+    {
+      "nombre": "Gooey Text Morphing",
+      "popularidad": 521,
+      "categoria": "Textos",
+      "estilo_visual": "Fluido / Orgánico / Tipográfico",
+      "problema_que_resuelve": "Presenta múltiples propuestas de valor en rotación con transiciones fluidas que llaman la atención"
+    },
+    {
+      "nombre": "Testimonials Columns",
+      "popularidad": 470,
+      "categoria": "Testimonios",
+      "estilo_visual": "Grid masonry / Social proof",
+      "problema_que_resuelve": "Muestra gran volumen de testimonios de forma compacta para generar credibilidad y confianza social"
+    },
+    {
+      "nombre": "Bento Grid",
+      "popularidad": 338,
+      "categoria": "Features",
+      "estilo_visual": "Bento / Modular / Editorial",
+      "problema_que_resuelve": "Organiza múltiples features en un layout visualmente rico que comunica profundidad del producto"
+    },
+    {
+      "nombre": "Sign In Flow",
+      "popularidad": 315,
+      "categoria": "Botones / Autenticación",
+      "estilo_visual": "Clean / Conversion-focused",
+      "problema_que_resuelve": "Reduce fricción en el onboarding con un flujo de registro/login pulido que mejora la conversión"
+    },
+    {
+      "nombre": "Typewriter",
+      "popularidad": 317,
+      "categoria": "Textos",
+      "estilo_visual": "Tipográfico animado / Retro-tech",
+      "problema_que_resuelve": "Presenta la propuesta de valor de forma dinámica simulando escritura, generando expectativa en el lector"
+    },
+    {
+      "nombre": "CPU Architecture",
+      "popularidad": 308,
+      "categoria": "Features",
+      "estilo_visual": "Técnico / Diagrama animado",
+      "problema_que_resuelve": "Visualiza arquitecturas técnicas o integraciones de forma atractiva para audiencias de desarrolladores"
+    },
+    {
+      "nombre": "Background Gradient Animation",
+      "popularidad": 317,
+      "categoria": "Backgrounds",
+      "estilo_visual": "Gradiente animado / Suave",
+      "problema_que_resuelve": "Añade vida a fondos estáticos con transiciones de color sutiles que dan sensación de calidad premium"
+    },
+    {
+      "nombre": "Gallery with Image Cards",
+      "popularidad": 291,
+      "categoria": "Features",
+      "estilo_visual": "Galería / Cards con hover",
+      "problema_que_resuelve": "Muestra capturas de producto o casos de uso de forma atractiva con interacciones de hover elegantes"
+    },
+    {
+      "nombre": "V0 AI Chat",
+      "popularidad": 265,
+      "categoria": "AI Chat Components",
+      "estilo_visual": "Minimalista / Chat moderno",
+      "problema_que_resuelve": "Demuestra capacidades de chat AI del producto directamente en la landing con una UI de alta calidad"
+    },
+    {
+      "nombre": "AI Prompt Box",
+      "popularidad": 275,
+      "categoria": "AI Chat Components",
+      "estilo_visual": "Input expandible / AI-native",
+      "problema_que_resuelve": "Ofrece un punto de entrada inmediato al producto AI, reduciendo la barrera de adopción desde la landing"
+    },
+    {
+      "nombre": "Animated AI Chat",
+      "popularidad": 236,
+      "categoria": "AI Chat Components",
+      "estilo_visual": "Conversacional / Animado",
+      "problema_que_resuelve": "Simula una conversación real con el AI para que el visitante entienda el valor del producto antes de registrarse"
+    },
+    {
+      "nombre": "Animated Text Cycle",
+      "popularidad": 236,
+      "categoria": "Textos",
+      "estilo_visual": "Rotación de texto / Dinámico",
+      "problema_que_resuelve": "Comunica múltiples casos de uso o audiencias en el headline sin requerir múltiples versiones de la landing"
+    },
+    {
+      "nombre": "Liquid Glass Button",
+      "popularidad": 205,
+      "categoria": "Botones",
+      "estilo_visual": "Glassmorphism / Premium",
+      "problema_que_resuelve": "Diferencia los CTAs principales con un efecto visual de cristal líquido que transmite modernidad"
+    },
+    {
+      "nombre": "Action Search Bar",
+      "popularidad": 204,
+      "categoria": "Calls to Action",
+      "estilo_visual": "Command palette / Funcional",
+      "problema_que_resuelve": "Convierte el CTA en una acción inmediata con barra de búsqueda que invita a explorar el producto al instante"
+    },
+    {
+      "nombre": "Features 8",
+      "popularidad": 269,
+      "categoria": "Features",
+      "estilo_visual": "Grid limpio / Icon-based",
+      "problema_que_resuelve": "Presenta 6-8 características clave de forma escaneable con iconos y descripciones concisas"
+    },
+    {
+      "nombre": "Sparkles Text",
+      "popularidad": 261,
+      "categoria": "Textos",
+      "estilo_visual": "Brillante / Destacado",
+      "problema_que_resuelve": "Resalta palabras clave en el headline con efectos de brillo para reforzar el mensaje más importante"
+    },
+    {
+      "nombre": "Link Preview",
+      "popularidad": 223,
+      "categoria": "Textos / Navegación",
+      "estilo_visual": "Hover preview / Interactivo",
+      "problema_que_resuelve": "Mejora la navegación mostrando previsualizaciones al pasar el cursor sobre links, reduciendo abandono"
+    },
+    {
+      "nombre": "Vapour Text Effect",
+      "popularidad": 210,
+      "categoria": "Textos",
+      "estilo_visual": "Vapor / Etéreo / Artístico",
+      "problema_que_resuelve": "Crea headlines memorables con efectos de vapor que transmiten sensación de lujo o innovación"
+    },
+    {
+      "nombre": "Agent Plan",
+      "popularidad": 215,
+      "categoria": "AI Chat Components",
+      "estilo_visual": "Lista de pasos / Process-driven",
+      "problema_que_resuelve": "Visualiza el plan de ejecución de un agente AI de forma transparente, generando confianza en el producto"
+    },
+    {
+      "nombre": "Gradient Text",
+      "popularidad": 189,
+      "categoria": "Textos",
+      "estilo_visual": "Gradiente tipográfico / Colorido",
+      "problema_que_resuelve": "Añade énfasis visual a palabras clave del headline sin necesitar imágenes adicionales"
+    },
+    {
+      "nombre": "Section With Mockup",
+      "popularidad": 170,
+      "categoria": "Features",
+      "estilo_visual": "Product mockup / Side-by-side",
+      "problema_que_resuelve": "Combina descripción de feature con mockup del producto para demostrar visualmente la funcionalidad"
+    },
+    {
+      "nombre": "Feature 108",
+      "popularidad": 200,
+      "categoria": "Features",
+      "estilo_visual": "Moderno / Centrado",
+      "problema_que_resuelve": "Destaca una feature principal con un diseño centrado y limpio ideal para propuestas de valor únicas"
+    },
+    {
+      "nombre": "Animated Testimonials",
+      "popularidad": 142,
+      "categoria": "Testimonios",
+      "estilo_visual": "Card animada / Carousel suave",
+      "problema_que_resuelve": "Presenta testimonios de clientes con animaciones fluidas que hacen la prueba social más memorable"
+    },
+    {
+      "nombre": "Testimonial Cards",
+      "popularidad": 143,
+      "categoria": "Testimonios",
+      "estilo_visual": "Card / Limpio / Tipográfico",
+      "problema_que_resuelve": "Muestra testimonios individuales en formato card con diseño limpio que prioriza la legibilidad"
+    },
+    {
+      "nombre": "Creative Pricing",
+      "popularidad": 110,
+      "categoria": "Pricing Sections",
+      "estilo_visual": "Creativo / No convencional",
+      "problema_que_resuelve": "Diferencia la sección de precios con un diseño único que reduce la percepción de coste mediante el diseño"
+    },
+    {
+      "nombre": "Pricing Interaction",
+      "popularidad": 109,
+      "categoria": "Pricing Sections",
+      "estilo_visual": "Interactivo / Toggle animado",
+      "problema_que_resuelve": "Permite al usuario cambiar entre planes con animaciones fluidas que hacen la comparación más fácil"
+    },
+    {
+      "nombre": "Circular Testimonials",
+      "popularidad": 115,
+      "categoria": "Testimonios",
+      "estilo_visual": "Circular / Orbital / Dinámico",
+      "problema_que_resuelve": "Presenta avatares de clientes en formato orbital que transmite una comunidad activa y en crecimiento"
+    },
+    {
+      "nombre": "Floating Action Menu",
+      "popularidad": 106,
+      "categoria": "Botones / Navegación",
+      "estilo_visual": "Flotante / Radial / Contextual",
+      "problema_que_resuelve": "Proporciona acciones rápidas accesibles desde cualquier punto de la página sin saturar el layout"
+    },
+    {
+      "nombre": "Background Boxes",
+      "popularidad": 179,
+      "categoria": "Backgrounds",
+      "estilo_visual": "Grid de cajas / Geométrico",
+      "problema_que_resuelve": "Crea fondos visualmente interesantes con patrones de cajas que aportan profundidad sin distraer"
+    },
+    {
+      "nombre": "Pulse Beams",
+      "popularidad": 151,
+      "categoria": "Backgrounds / Calls to Action",
+      "estilo_visual": "Rayos pulsantes / Energético",
+      "problema_que_resuelve": "Dirige la atención al CTA con rayos de luz animados que crean sensación de energía y movimiento"
+    },
+    {
+      "nombre": "Hand Writing Text",
+      "popularidad": 151,
+      "categoria": "Textos",
+      "estilo_visual": "Manuscrito / Orgánico / Personal",
+      "problema_que_resuelve": "Añade un toque humano y personal a secciones clave, rompiendo con la frialdad de los textos digitales"
+    },
+    {
+      "nombre": "Typewriter Effect",
+      "popularidad": 117,
+      "categoria": "Textos",
+      "estilo_visual": "Retro-tech / Progresivo",
+      "problema_que_resuelve": "Simula escritura en tiempo real para presentar el mensaje principal de forma que el usuario lo lea completo"
+    },
+    {
+      "nombre": "Navigation Menu",
+      "popularidad": 11,
+      "categoria": "Navegación",
+      "estilo_visual": "Limpio / Funcional / Dropdown",
+      "problema_que_resuelve": "Proporciona navegación clara y accesible que orienta al visitante sin saturar el espacio superior"
+    },
+    {
+      "nombre": "Footer",
+      "popularidad": 14,
+      "categoria": "Footer",
+      "estilo_visual": "Estructurado / Grid / Informativo",
+      "problema_que_resuelve": "Cierra la página con links relevantes, legal y contacto de forma organizada que refuerza la credibilidad"
+    },
+    {
+      "nombre": "Animated Cards Stack",
+      "popularidad": 90,
+      "categoria": "Testimonios",
+      "estilo_visual": "Stack 3D / Profundidad",
+      "problema_que_resuelve": "Presenta testimonios apilados con animación 3D que añade dinamismo y jerarquía visual a la sección"
+    },
+    {
+      "nombre": "Reveal Images",
+      "popularidad": 168,
+      "categoria": "Textos / Imágenes",
+      "estilo_visual": "Reveal animado / Dramático",
+      "problema_que_resuelve": "Crea un efecto de revelación de imágenes que genera expectativa y hace memorable la presentación del producto"
+    },
+    {
+      "nombre": "Single Pricing Card",
+      "popularidad": 80,
+      "categoria": "Pricing Sections",
+      "estilo_visual": "Minimalista / Enfocado",
+      "problema_que_resuelve": "Presenta un único plan o precio de forma clara y directa, ideal para productos con modelo simple"
+    },
+    {
+      "nombre": "Grid Feature Cards",
+      "popularidad": 116,
+      "categoria": "Features",
+      "estilo_visual": "Grid / Cards con iconos",
+      "problema_que_resuelve": "Organiza múltiples features en cards uniformes que facilitan la comparación y escaneo rápido"
+    },
+    {
+      "nombre": "Neon Button",
+      "popularidad": 90,
+      "categoria": "Botones",
+      "estilo_visual": "Neón / Dark mode / Llamativo",
+      "problema_que_resuelve": "Hace destacar el CTA principal con efecto neón en interfaces oscuras donde los botones tradicionales se pierden"
+    },
+    {
+      "nombre": "Stagger Testimonials",
+      "popularidad": 101,
+      "categoria": "Testimonios",
+      "estilo_visual": "Escalonado / Animación secuencial",
+      "problema_que_resuelve": "Presenta testimonios con entrada escalonada que guía al ojo y hace la sección más dinámica"
+    }
+  ],
+  "categorias_resumen": {
+    "Heroes": {
+      "total_componentes": 73,
+      "descripcion": "Secciones de cabecera para el top de la landing"
+    },
+    "Features": {
+      "total_componentes": 36,
+      "descripcion": "Secciones para mostrar características del producto"
+    },
+    "Textos": {
+      "total_componentes": 58,
+      "descripcion": "Componentes tipográficos animados y decorativos"
+    },
+    "Testimonios": {
+      "total_componentes": 15,
+      "descripcion": "Prueba social y testimonios de clientes"
+    },
+    "Botones": {
+      "total_componentes": 130,
+      "descripcion": "CTAs y botones de acción"
+    },
+    "Calls to Action": {
+      "total_componentes": 34,
+      "descripcion": "Secciones completas de llamada a la acción"
+    },
+    "Pricing Sections": {
+      "total_componentes": 17,
+      "descripcion": "Tablas y secciones de precios"
+    },
+    "Backgrounds": {
+      "total_componentes": 33,
+      "descripcion": "Fondos animados y decorativos"
+    },
+    "AI Chat Components": {
+      "total_componentes": 30,
+      "descripcion": "Componentes de chat e interfaces AI"
+    },
+    "Navegación": {
+      "total_componentes": 11,
+      "descripcion": "Menús y elementos de navegación"
+    },
+    "Footer": {
+      "total_componentes": 14,
+      "descripcion": "Pies de página"
+    }
+  }
+}
