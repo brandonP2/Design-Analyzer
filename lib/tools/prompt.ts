@@ -4,6 +4,7 @@ import { execFileSync } from "child_process";
 import Anthropic from "@anthropic-ai/sdk";
 import type { DesignScore, VisionResult } from "./vision";
 import type { LighthouseResult } from "./lighthouse";
+import type { BrandingProfile } from "./extract";
 
 export interface PromptResult {
   prompt: string;
@@ -265,8 +266,9 @@ export async function generatePrompt(
   url: string,
   visionResult: VisionResult,
   lighthouseData: LighthouseResult | null,
-  preferences: { style?: string; goal?: string; tone?: string } = {},
-  html: string = ""
+  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string } = {},
+  html: string = "",
+  branding: BrandingProfile | null = null
 ): Promise<PromptResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");

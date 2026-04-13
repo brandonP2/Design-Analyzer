@@ -15,9 +15,11 @@ const RequestSchema = z.object({
       style: z.enum(["modern", "minimal", "bold", "playful"]).default("modern"),
       goal: z.enum(["conversion", "branding", "ux", "clean"]).default("conversion"),
       tone: z.enum(["professional", "playful", "serious"]).default("professional"),
+      keep: z.array(z.string()).optional().default([]),
+      platform: z.enum(["lovable", "bolt", "claude"]).optional().default("lovable"),
     })
     .optional()
-    .default({ style: "modern", goal: "conversion", tone: "professional" }),
+    .default({ style: "modern", goal: "conversion", tone: "professional", keep: [], platform: "lovable" }),
 });
 
 // ---------------------------------------------------------------------------
@@ -148,7 +150,8 @@ export async function POST(request: Request): Promise<Response> {
         const visionResult = await analyzeWithVision(
           extractResult.screenshotUrl,
           lighthouseResult,
-          preferences
+          preferences,
+          extractResult.branding
         );
 
         // ── Step 3: Generate prompt ───────────────────────────────────────────
@@ -158,7 +161,14 @@ export async function POST(request: Request): Promise<Response> {
           message: "Building your optimized Lovable/Bolt prompt…",
         });
 
-        const promptResult = await generatePrompt(url, visionResult, lighthouseResult, preferences, extractResult.html);
+        const promptResult = await generatePrompt(
+          url,
+          visionResult,
+          lighthouseResult,
+          preferences,
+          extractResult.html,
+          extractResult.branding
+        );
 
         // ── Done ──────────────────────────────────────────────────────────────
         send({ type: "progress", step: "done", message: "Analysis complete." });
@@ -171,6 +181,7 @@ export async function POST(request: Request): Promise<Response> {
             lighthouse: lighthouseResult,
             analysis: visionResult,
             prompt: promptResult.prompt,
+            branding: extractResult.branding,
           },
         });
       } catch (err) {

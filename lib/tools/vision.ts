@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { LighthouseResult } from "./lighthouse";
+import type { BrandingProfile } from "./extract";
 
 export interface DesignScore {
   colors: number;
@@ -97,7 +98,8 @@ improvements_ranked: top 5, ordered by impact/effort ratio (high impact + low ef
 export async function analyzeWithVision(
   screenshotUrl: string,
   lighthouseData: LighthouseResult | null,
-  preferences: { style?: string; goal?: string; tone?: string } = {}
+  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string } = {},
+  branding: BrandingProfile | null = null
 ): Promise<VisionResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
