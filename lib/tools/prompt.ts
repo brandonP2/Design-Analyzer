@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { execFileSync } from "child_process";
 import Anthropic from "@anthropic-ai/sdk";
+import type { TextBlock } from "@anthropic-ai/sdk/resources/messages";
 import type { DesignScore, VisionResult } from "./vision";
 import type { LighthouseResult } from "./lighthouse";
 import type { BrandingProfile } from "./extract";
@@ -362,7 +363,7 @@ function buildClaudeUserInput(
   const style = preferences.style ?? "modern";
   const goal = preferences.goal ?? "conversion";
   const tone = preferences.tone ?? "professional";
-  const keep = preferences.keep ?? [];
+  const keep = (preferences.keep ?? []).map(k => k.replace(/[\r\n]/g, " "));
 
   const keepList = keep.length > 0
     ? keep
@@ -460,8 +461,8 @@ export async function generatePrompt(
   });
 
   const prompt = response.content
-    .filter((b) => b.type === "text")
-    .map((b) => (b as { type: "text"; text: string }).text)
+    .filter((b): b is TextBlock => b.type === "text")
+    .map(b => b.text)
     .join("")
     .trim();
 
@@ -490,8 +491,8 @@ async function generateClaudePrompt(
   });
 
   const basePrompt = response.content
-    .filter(b => b.type === "text")
-    .map(b => (b as { type: "text"; text: string }).text)
+    .filter((b): b is TextBlock => b.type === "text")
+    .map(b => b.text)
     .join("")
     .trim();
 
