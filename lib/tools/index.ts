@@ -1,5 +1,5 @@
 export { extractWebsite } from "./extract";
-export type { ExtractResult } from "./extract";
+export type { ExtractResult, BrandingProfile } from "./extract";
 
 export { runLighthouse } from "./lighthouse";
 export type { LighthouseResult } from "./lighthouse";
