@@ -1,8 +1,11 @@
-import { FirecrawlClient } from "@mendable/firecrawl-js";
+import { FirecrawlClient, type BrandingProfile } from "@mendable/firecrawl-js";
+
+export type { BrandingProfile };
 
 export interface ExtractResult {
   html: string;
   screenshotUrl: string;
+  branding: BrandingProfile | null;
 }
 
 export async function extractWebsite(url: string): Promise<ExtractResult> {
@@ -11,9 +14,8 @@ export async function extractWebsite(url: string): Promise<ExtractResult> {
 
   const client = new FirecrawlClient({ apiKey });
 
-  // FirecrawlClient.scrape returns data directly (no success wrapper)
   const result = await client.scrape(url, {
-    formats: ["rawHtml", "screenshot"],
+    formats: ["rawHtml", "screenshot", "branding"],
   });
 
   if (!result?.rawHtml && !result?.screenshot) {
@@ -23,5 +25,6 @@ export async function extractWebsite(url: string): Promise<ExtractResult> {
   return {
     html: result.rawHtml ?? "",
     screenshotUrl: result.screenshot ?? "",
+    branding: result.branding ?? null,
   };
 }
