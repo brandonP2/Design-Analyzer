@@ -231,7 +231,7 @@ function CategoryCard({
 // PromptBox — monospace, subtle copy button revealed on hover
 // ---------------------------------------------------------------------------
 
-function PromptBox({ prompt }: { prompt: string }) {
+function PromptBox({ prompt, platform }: { prompt: string; platform: "lovable" | "bolt" | "claude" }) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -240,13 +240,18 @@ function PromptBox({ prompt }: { prompt: string }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const headerLabel =
+    platform === "claude"
+      ? "Claude Build Brief"
+      : `${platform.charAt(0).toUpperCase() + platform.slice(1)} Prompt`;
+
   return (
     <div className="group relative rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
         <div>
           <p className="text-xs font-semibold text-gray-700 tracking-wide uppercase">
-            Lovable / Bolt Prompt
+            {headerLabel}
           </p>
           <p className="text-[11px] text-gray-400 mt-0.5">Ready to paste</p>
         </div>
@@ -321,30 +326,37 @@ function Results({ result, platform }: { result: AnalysisResult; platform: "lova
   const { analysis, screenshotUrl, url, prompt } = result;
   const { scores, findings, improvements_ranked, summary, page_summary } = analysis;
 
+  const colorEntries = result.branding?.colors
+    ? Object.entries(result.branding.colors)
+        .filter((entry): entry is [string, string] => {
+          const v = entry[1];
+          return typeof v === "string" && v.startsWith("#");
+        })
+        .slice(0, 6)
+    : [];
+
   return (
     <div className="space-y-8 mt-10">
 
       {/* Screenshot */}
       <div className="animate-fade-up">
         <BrowserFrame url={url} screenshotUrl={screenshotUrl} />
-        {result.branding?.colors && (
+        {result.branding?.colors && (colorEntries.length > 0 || (result.branding.fonts?.length ?? 0) > 0) && (
           <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
             <p className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">
               Detected Design System
             </p>
             <div className="flex flex-wrap gap-2">
-              {Object.entries(result.branding.colors)
-                .filter(([, v]) => v && v.startsWith("#"))
-                .slice(0, 6)
-                .map(([k, v]) => (
-                  <div key={k} className="flex items-center gap-1.5">
-                    <span
-                      className="w-4 h-4 rounded-full border border-gray-300 inline-block"
-                      style={{ backgroundColor: v as string }}
-                    />
-                    <span className="text-xs text-gray-500">{k}: {v}</span>
-                  </div>
-                ))}
+              {colorEntries.map(([k, v]) => (
+                <div key={k} className="flex items-center gap-1.5">
+                  <span
+                    className="w-4 h-4 rounded-full border border-gray-300 inline-block"
+                    role="presentation"
+                    style={{ backgroundColor: v }}
+                  />
+                  <span className="text-xs text-gray-500">{k}: {v}</span>
+                </div>
+              ))}
             </div>
             {result.branding.fonts && result.branding.fonts.length > 0 && (
               <p className="text-xs text-gray-500 mt-1">
@@ -422,7 +434,7 @@ function Results({ result, platform }: { result: AnalysisResult; platform: "lova
         <p className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-3">
           {platform === "claude" ? "Claude Build Brief" : `${platform.charAt(0).toUpperCase() + platform.slice(1)} Prompt`}
         </p>
-        <PromptBox prompt={prompt} />
+        <PromptBox prompt={prompt} platform={platform} />
       </div>
     </div>
   );
