@@ -317,7 +317,7 @@ function ProgressBar({ phase }: { phase: Phase }) {
 // Results
 // ---------------------------------------------------------------------------
 
-function Results({ result }: { result: AnalysisResult }) {
+function Results({ result, platform }: { result: AnalysisResult; platform: "lovable" | "bolt" | "claude" }) {
   const { analysis, screenshotUrl, url, prompt } = result;
   const { scores, findings, improvements_ranked, summary, page_summary } = analysis;
 
@@ -327,6 +327,32 @@ function Results({ result }: { result: AnalysisResult }) {
       {/* Screenshot */}
       <div className="animate-fade-up">
         <BrowserFrame url={url} screenshotUrl={screenshotUrl} />
+        {result.branding?.colors && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-2">
+              Detected Design System
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(result.branding.colors)
+                .filter(([, v]) => v && v.startsWith("#"))
+                .slice(0, 6)
+                .map(([k, v]) => (
+                  <div key={k} className="flex items-center gap-1.5">
+                    <span
+                      className="w-4 h-4 rounded-full border border-gray-300 inline-block"
+                      style={{ backgroundColor: v as string }}
+                    />
+                    <span className="text-xs text-gray-500">{k}: {v}</span>
+                  </div>
+                ))}
+            </div>
+            {result.branding.fonts && result.branding.fonts.length > 0 && (
+              <p className="text-xs text-gray-500 mt-1">
+                Fonts: {result.branding.fonts.map(f => f.family).join(", ")}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Score + summary strip */}
@@ -393,8 +419,8 @@ function Results({ result }: { result: AnalysisResult }) {
 
       {/* Prompt */}
       <div className="animate-fade-up-delay-4">
-        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-3">
-          Optimized prompt
+        <p className="text-xs text-gray-500 uppercase tracking-wider font-medium mb-3">
+          {platform === "claude" ? "Claude Build Brief" : `${platform.charAt(0).toUpperCase() + platform.slice(1)} Prompt`}
         </p>
         <PromptBox prompt={prompt} />
       </div>
@@ -625,7 +651,7 @@ export default function Home() {
         )}
 
         {/* Results */}
-        {phase.kind === "done" && <Results result={phase.result} />}
+        {phase.kind === "done" && <Results result={phase.result} platform={platform} />}
       </div>
     </div>
   );

@@ -158,7 +158,9 @@ export async function POST(request: Request): Promise<Response> {
         send({
           type: "progress",
           step: "prompt",
-          message: "Building your optimized Lovable/Bolt prompt…",
+          message: preferences.platform === "claude"
+            ? "Building your Claude build session brief…"
+            : `Building your optimized ${preferences.platform === "bolt" ? "Bolt" : "Lovable"} prompt…`,
         });
 
         const promptResult = await generatePrompt(
