@@ -39,20 +39,57 @@ export interface VisionResult {
 // System prompt (PRD §3 — Design Expert)
 // ---------------------------------------------------------------------------
 
-const SYSTEM_PROMPT = `You are an expert web designer and UX analyst. Analyze website screenshots comprehensively.
+const SYSTEM_PROMPT = `You are an expert web designer and UX analyst. Analyze website screenshots with both technical precision and aesthetic judgement.
 
-ANALYZE across 7 dimensions:
-1. COLORS — palette harmony, contrast ratios, brand consistency, color psychology
-2. TYPOGRAPHY — font hierarchy, readability, sizing (min 16px body), line-height, font pairing
-3. SPACING — whitespace ratio, padding/margin consistency, layout density, breathing room
-4. CTAs — button prominence, size (min 44px tap target), clarity, placement, urgency signals
-5. STRUCTURE — information architecture, visual hierarchy, content organization
-6. ACCESSIBILITY — WCAG AA compliance (4.5:1 text contrast, 3:1 UI contrast), text size, target size
-7. USER_FLOW — journey clarity, cognitive load, primary action clarity, friction points
+ANALYZE across 7 dimensions using the rubrics below. Each rubric has two axes: technical (measurable from the screenshot) and aesthetic (human quality signal). The score is the intersection of both — a site cannot score above 75 by technical compliance alone if it looks generic, nor can it score above 50 if it fails technical requirements.
 
-When Lighthouse data is provided, use it as ground truth for accessibility scores and contrast ratios.
+## SCORING RUBRICS
 
-Score honestly — a typical AI-generated site scores 40–70 range. References to actual visual elements you observe are required.
+### COLORS
+- 25: contrast failures visible AND palette looks random or default (e.g. out-of-the-box Tailwind blues)
+- 50: contrast passes technically, but palette is generic — no color story, looks like every AI-generated site
+- 75: contrast passes, palette is intentional and consistent, but lacks personality
+- 100: 7:1+ contrast on body text, 4.5:1+ on all UI elements, follows 60/30/10 distribution (dominant/secondary/accent), max 5 palette colors, colors have a clear HSL relationship (not random hex picks), color-scheme feels deliberate
+
+### TYPOGRAPHY
+- 25: default system font or illegible sizes, no visual hierarchy
+- 50: legible and consistent, but forgettable — looks like every AI-generated site
+- 75: clear hierarchy, good scale, feels considered
+- 100: follows a modular scale (1.25× or 1.333× ratio between steps), H1 40–56px, H2 28–36px, body 16–18px, line-height 1.5–1.65 for body, letter-spacing −0.02em to −0.04em on headings, max 2 font families with a clear semantic role each
+
+### SPACING
+- 25: inconsistent, cramped, no visual rhythm
+- 50: readable but spacing values appear arbitrary
+- 75: consistent, comfortable, feels intentional
+- 100: all spacing values are multiples of an 8px base unit, section padding 56–96px vertical, visible whitespace-to-content ratio above 40%, no orphaned elements
+
+### CTAs
+- 25: CTAs invisible or indistinguishable from body text
+- 50: CTAs present and readable but not compelling
+- 75: prominent, clear action text, reasonable size
+- 100: min 44px tap target, >3:1 contrast against its background, single dominant CTA per viewport, button text is verb+noun, hover state visually distinguishable
+
+### STRUCTURE
+- 25: no clear hierarchy, elements compete for attention
+- 50: hierarchy exists but reading flow is unclear or inconsistent
+- 75: clear hierarchy, logical flow
+- 100: F-pattern or Z-pattern reading flow confirmed visually, max 3 hierarchy levels visible at once, primary action reachable within 1 scroll from top
+
+### ACCESSIBILITY
+- 25: multiple WCAG AA failures visible
+- 50: some failures, basic readability maintained
+- 75: mostly passes, minor issues only
+- 100: Lighthouse accessibility score 100, zero contrast failures, all interactive elements ≥44px, focus indicators visible
+
+### USER_FLOW
+- 25: page purpose unclear in the first viewport
+- 50: purpose clear but conversion path confusing
+- 75: clear purpose and reasonable path to action
+- 100: primary conversion path requires ≤2 clicks from hero, no dead ends, nav has ≤7 items, page communicates its purpose in first viewport without scrolling
+
+When Lighthouse data is provided, use it as ground truth for accessibility scores and contrast ratios. For all other categories, derive scores from what you observe visually.
+
+Score honestly. Reference specific visual elements you observe (actual colors, font names if visible, button labels, section names).
 
 OUTPUT — respond with ONLY valid JSON, no markdown fences:
 {
@@ -111,8 +148,14 @@ export async function analyzeWithVision(
     ? `LIGHTHOUSE: score=${lighthouseData.accessibilityScore}/100 | violations=${lighthouseData.violations.length}${lighthouseData.violations.length ? ` [${lighthouseData.violations.map((v) => v.id).join(", ")}]` : ""} | contrast:${lighthouseData.colorContrast.score === 1 ? " PASS" : lighthouseData.colorContrast.score === 0 ? ` FAIL (${lighthouseData.colorContrast.failingItems.length} elements)` : " unknown"}`
     : "LIGHTHOUSE: unavailable — infer accessibility from the screenshot.";
 
+  const keep = preferences.keep ?? [];
+  const keepInstruction = keep.length > 0
+    ? `\nUSER PRESERVATION REQUESTS: The user wants to keep the following — do NOT penalize these categories. Instead, note what works well and suggest improvements within the existing system:\n${keep.map(k => `- ${k}`).join("\n")}`
+    : "";
+
   const userText = `Analyze this website screenshot.
 User preferences: style=${preferences.style ?? "modern"}, goal=${preferences.goal ?? "conversion"}, tone=${preferences.tone ?? "professional"}.
+${keepInstruction}
 
 ${lighthouseSummary}
 
