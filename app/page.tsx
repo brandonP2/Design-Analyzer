@@ -412,6 +412,7 @@ export default function Home() {
   const abortRef = useRef<AbortController | null>(null);
   const [keep, setKeep] = useState<string[]>([]);
   const [platform, setPlatform] = useState<"lovable" | "bolt" | "claude">("lovable");
+  const [customKeep, setCustomKeep] = useState("");
 
   function toggleKeep(id: string) {
     setKeep(prev => prev.includes(id) ? prev.filter(k => k !== id) : [...prev, id]);
@@ -488,6 +489,9 @@ export default function Home() {
     abortRef.current?.abort();
     setPhase({ kind: "idle" });
     setUrl("");
+    setKeep([]);
+    setPlatform("lovable");
+    setCustomKeep("");
   };
 
   const isLoading = phase.kind === "loading";
@@ -571,13 +575,16 @@ export default function Home() {
                 {/* Custom keep field */}
                 <input
                   type="text"
+                  value={customKeep}
+                  onChange={e => setCustomKeep(e.target.value)}
                   placeholder="Custom: e.g. keep the hero image position"
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400"
-                  onBlur={e => {
-                    const val = e.target.value.trim();
-                    if (val && !keep.includes(`custom: ${val}`)) {
-                      setKeep(prev => [...prev.filter(k => !k.startsWith("custom:")), `custom: ${val}`]);
-                    }
+                  onBlur={() => {
+                    const val = customKeep.trim();
+                    setKeep(prev => {
+                      const without = prev.filter(k => !k.startsWith("custom:"));
+                      return val ? [...without, `custom: ${val}`] : without;
+                    });
                   }}
                 />
               </div>
@@ -587,11 +594,12 @@ export default function Home() {
                 <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
                   Build platform
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-2" role="group" aria-label="Build platform">
                   {(["lovable", "bolt", "claude"] as const).map(p => (
                     <button
                       key={p}
                       type="button"
+                      aria-pressed={platform === p}
                       onClick={() => setPlatform(p)}
                       className={`flex-1 py-2 px-3 text-sm rounded-lg border transition-colors capitalize ${
                         platform === p
