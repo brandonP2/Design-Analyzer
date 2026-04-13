@@ -150,12 +150,11 @@ export async function analyzeWithVision(
 
   const keep = preferences.keep ?? [];
   const keepInstruction = keep.length > 0
-    ? `\nUSER PRESERVATION REQUESTS: The user wants to keep the following — do NOT penalize these categories. Instead, note what works well and suggest improvements within the existing system:\n${keep.map(k => `- ${k}`).join("\n")}`
+    ? `\nUSER PRESERVATION REQUESTS: The user wants to keep the following — do NOT penalize these categories. Instead, note what works well and suggest improvements within the existing system:\n${keep.map(k => `- ${k.replace(/[\r\n]/g, " ")}`).join("\n")}`
     : "";
 
   const userText = `Analyze this website screenshot.
-User preferences: style=${preferences.style ?? "modern"}, goal=${preferences.goal ?? "conversion"}, tone=${preferences.tone ?? "professional"}.
-${keepInstruction}
+User preferences: style=${preferences.style ?? "modern"}, goal=${preferences.goal ?? "conversion"}, tone=${preferences.tone ?? "professional"}.${keepInstruction}
 
 ${lighthouseSummary}
 
