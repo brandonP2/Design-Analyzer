@@ -15,8 +15,8 @@ const RequestSchema = z.object({
       style: z.enum(["modern", "minimal", "bold", "playful"]).default("modern"),
       goal: z.enum(["conversion", "branding", "ux", "clean"]).default("conversion"),
       tone: z.enum(["professional", "playful", "serious"]).default("professional"),
-      keep: z.array(z.string()).optional().default([]),
-      platform: z.enum(["lovable", "bolt", "claude"]).optional().default("lovable"),
+      keep: z.array(z.string().min(1).max(64)).max(10).default([]),
+      platform: z.enum(["lovable", "bolt", "claude"]).default("lovable"),
     })
     .optional()
     .default({ style: "modern", goal: "conversion", tone: "professional", keep: [], platform: "lovable" }),

@@ -189,7 +189,7 @@ function buildUserInput(
   url: string,
   vision: VisionResult,
   lighthouseData: LighthouseResult | null,
-  preferences: { style?: string; goal?: string; tone?: string },
+  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string },
   designSystem: string | null,
   html: string
 ): string {
