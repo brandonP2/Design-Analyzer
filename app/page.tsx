@@ -546,7 +546,7 @@ export default function Home() {
             Design Analyzer
           </h1>
           <p className="text-sm text-gray-400 mt-1 leading-relaxed">
-            Objective scores, findings, and a Lovable-ready prompt for any AI-built site.
+            Objective scores, findings, and a platform-ready prompt for any AI-built site.
           </p>
         </div>
 

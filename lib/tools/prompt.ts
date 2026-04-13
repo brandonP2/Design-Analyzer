@@ -290,9 +290,12 @@ function buildUserInput(
   const goal = preferences.goal ?? "conversion";
   const tone = preferences.tone ?? "professional";
 
-  const keepList = Object.entries(scores)
-    .filter(([k, v]) => k !== "overall" && v >= 75)
-    .map(([k]) => CATEGORY_LABELS[k] ?? k);
+  const keep = (preferences.keep ?? []).map(k => k.replace(/[\r\n]/g, " "));
+  const keepList = keep.length > 0
+    ? keep
+    : Object.entries(scores)
+        .filter(([k, v]) => k !== "overall" && v >= 75)
+        .map(([k]) => CATEGORY_LABELS[k] ?? k);
 
   const weakList = Object.entries(scores)
     .filter(([k, v]) => k !== "overall" && v < 75)
@@ -335,7 +338,7 @@ function buildUserInput(
     `Score: ${scores.overall}/100 | Style: ${style} | Goal: ${goal} | Tone: ${tone}`,
     contrastLine,
     htmlSection,
-    keepList.length ? `STRONG (score ≥75): ${keepList.join(", ")}` : "",
+    keepList.length ? `${keep.length > 0 ? "PRESERVE (user wants to keep)" : "STRONG (score ≥75)"}: ${keepList.join(", ")}` : "",
     weakList.length ? `WEAK (needs work): ${weakList.join(", ")}` : "",
     dsBlock,
     "PRIORITY FIXES:",
@@ -345,7 +348,7 @@ function buildUserInput(
     categorySuggestions,
     compsBlock,
   ]
-    .filter((l) => l !== undefined)
+    .filter((l) => l !== undefined && l !== "")
     .join("\n")
     .trim();
 }
