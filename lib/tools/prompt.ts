@@ -10,6 +10,54 @@ export interface PromptResult {
   prompt: string;
 }
 
+export interface SkillSuggestion {
+  name: string;
+  trigger: string;
+  use: string;
+}
+
+// Pure function — no side effects, fully testable
+export function selectSkillsForScores(scores: DesignScore): SkillSuggestion[] {
+  const skills: SkillSuggestion[] = [];
+
+  if ((scores.colors ?? 100) < 75 || (scores.typography ?? 100) < 75) {
+    skills.push({
+      name: "/ui-ux-pro-max",
+      trigger: "Run before starting DESIGN SYSTEM changes.",
+      use: "Use it to select the color palette and type scale.",
+    });
+  }
+
+  if (
+    (scores.cta ?? 100) < 75 ||
+    (scores.structure ?? 100) < 75 ||
+    (scores.spacing ?? 100) < 75
+  ) {
+    skills.push({
+      name: "/design-html",
+      trigger: "Run for each COMPONENT TO UPGRADE item.",
+      use: "Generates production-quality HTML/CSS for the component.",
+    });
+  }
+
+  if ((scores.structure ?? 100) < 75) {
+    skills.push({
+      name: "/design-shotgun",
+      trigger: "Run before committing to layout changes.",
+      use: "Generates 3 layout variants to compare.",
+    });
+  }
+
+  // Always include design-review
+  skills.push({
+    name: "/design-review",
+    trigger: "Run after all changes are applied to validate the result.",
+    use: "Catches visual inconsistencies and spacing issues.",
+  });
+
+  return skills;
+}
+
 // ---------------------------------------------------------------------------
 // extractHtmlStructure — pull headings, CTAs, and nav links from raw HTML
 // ---------------------------------------------------------------------------
