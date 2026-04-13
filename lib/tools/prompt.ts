@@ -58,6 +58,20 @@ export function selectSkillsForScores(scores: DesignScore): SkillSuggestion[] {
   return skills;
 }
 
+function buildSkillsAppendix(scores: DesignScore): string {
+  const skills = selectSkillsForScores(scores);
+  const lines = skills
+    .map(s => `- ${s.name}  → ${s.trigger}\n  ${s.use}`)
+    .join("\n");
+  return `--- IF YOU HAVE THESE CLAUDE SKILLS INSTALLED ---
+These skills will improve the quality of this build session:
+
+${lines}
+
+These are enhancements — the prompt works without them.
+---`;
+}
+
 // ---------------------------------------------------------------------------
 // extractHtmlStructure — pull headings, CTAs, and nav links from raw HTML
 // ---------------------------------------------------------------------------
@@ -229,6 +243,35 @@ Given a structured design analysis with scores, findings, page content, and comp
 ${example}`;
 }
 
+function buildClaudeSystemPrompt(): string {
+  const example = getPromptExample();
+  return `You are an expert design-to-code translator working with Claude (AI coding assistant).
+
+Given a structured design analysis, write a precise build session brief that a developer can paste into a Claude conversation to improve their website.
+
+## Rules
+
+1. Be SPECIFIC — reference actual content from the page (headlines, button text, section names).
+2. Include exact CSS values: #hex colors, px sizes, font-weights, border-radius, shadows, spacing.
+3. Structure the output with these sections in order:
+   - **KEEP**: what's already working well (specific, with values)
+   - **DESIGN SYSTEM**: complete color palette (primary, hover, background, surface, text, accent, border) + typography scale (H1–H3, body, small with size/weight/line-height/tracking)
+   - **CHANGE**: numbered list ordered by priority. Each item must be phrased as an exact message for the developer to send to Claude. Format each item as: "[impact/effort] Tell Claude: '[exact instruction with CSS values and context]'"
+   - **COMPONENTS TO UPGRADE**: for each component, write: "For [section name]: tell Claude to search 21st.dev for [component name] and implement it. If you have /design-html, run: /design-html [brief component spec]"
+   - Do NOT write a SKILLS section — it will be appended automatically.
+4. CHANGE items should have 5–8 entries. Cover all weak-scoring categories.
+5. DESIGN SYSTEM: extract colors from what's observed + what needs to change. Build a coherent palette.
+6. Output ONLY the prompt text — no preamble, no markdown fences, no explanation.
+
+## Example of an excellent Claude-mode CHANGE item
+
+[high/low] Tell Claude: "Audit every text element in the codebase and enforce a minimum 7:1 contrast ratio. Current background is #1A1A1A. Replace any gray text lighter than #767676 with #E0E0E0. Show me a list of every file you changed."
+
+## Reference example (Lovable format — adapt the CHANGE section to Claude turns):
+
+${example}`;
+}
+
 // ---------------------------------------------------------------------------
 // Build a lean input for Haiku (~600-700 tokens with new blocks)
 // ---------------------------------------------------------------------------
@@ -306,6 +349,82 @@ function buildUserInput(
     .trim();
 }
 
+function buildClaudeUserInput(
+  url: string,
+  vision: VisionResult,
+  lighthouseData: LighthouseResult | null,
+  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string },
+  designSystem: string | null,
+  html: string,
+  branding: BrandingProfile | null
+): string {
+  const { scores, findings, improvements_ranked, page_summary } = vision;
+  const style = preferences.style ?? "modern";
+  const goal = preferences.goal ?? "conversion";
+  const tone = preferences.tone ?? "professional";
+  const keep = preferences.keep ?? [];
+
+  const keepList = keep.length > 0
+    ? keep
+    : Object.entries(scores)
+        .filter(([k, v]) => k !== "overall" && v >= 75)
+        .map(([k]) => CATEGORY_LABELS[k] ?? k);
+
+  const weakList = Object.entries(scores)
+    .filter(([k, v]) => k !== "overall" && v < 75)
+    .sort(([, a], [, b]) => a - b)
+    .map(([k, v]) => `${CATEGORY_LABELS[k] ?? k}: ${v}/100`);
+
+  const priorityFixes = improvements_ranked
+    .map((imp, i) => `${i + 1}. [${imp.impact}/${imp.effort}] ${imp.issue} → ${imp.fix}`)
+    .join("\n");
+
+  const categorySuggestions = Object.entries(findings)
+    .filter(([, f]) => f.suggestions.length > 0)
+    .map(([k, f]) => `${CATEGORY_LABELS[k] ?? k}: ${f.suggestions.slice(0, 3).join("; ")}`)
+    .join("\n");
+
+  const contrastLine = lighthouseData
+    ? `Lighthouse contrast: ${lighthouseData.colorContrast.score === 1 ? "PASS" : lighthouseData.colorContrast.score === 0 ? `FAIL (${lighthouseData.colorContrast.failingItems.length} elements)` : "unknown"}`
+    : "";
+
+  const brandingBlock = branding?.colors
+    ? `\nDETECTED BRANDING:\nColors: primary=${branding.colors.primary ?? "unknown"}, background=${branding.colors.background ?? "unknown"}, text=${branding.colors.textPrimary ?? "unknown"}\nFonts: ${branding.fonts?.map(f => f.family).join(", ") ?? "unknown"}\n`
+    : "";
+
+  const dsBlock = designSystem ? `\nDESIGN SYSTEM RECOMMENDATION:\n${designSystem}\n` : "";
+
+  const htmlBlock = extractHtmlStructure(html);
+  const htmlSection = htmlBlock ? `\nPAGE CONTENT (from HTML):\n${htmlBlock}\n` : "";
+
+  const comps = matchComponents(scores);
+  const compsBlock = comps.length > 0
+    ? `\nCOMPONENTS TO SUGGEST (from 21st.dev):\n` +
+      comps.map(c => `- ${c.nombre} [${c.categoria}]: ${c.problema_que_resuelve}`).join("\n") + "\n"
+    : "";
+
+  return [
+    `URL: ${url}`,
+    `Page: ${page_summary}`,
+    `Score: ${scores.overall}/100 | Style: ${style} | Goal: ${goal} | Tone: ${tone}`,
+    contrastLine,
+    brandingBlock,
+    htmlSection,
+    keepList.length ? `PRESERVE (user wants to keep): ${keepList.join(", ")}` : "",
+    weakList.length ? `WEAK (needs work): ${weakList.join(", ")}` : "",
+    dsBlock,
+    "PRIORITY FIXES:",
+    priorityFixes,
+    "",
+    "ALL CATEGORY SUGGESTIONS:",
+    categorySuggestions,
+    compsBlock,
+  ]
+    .filter(l => l !== undefined && l !== "")
+    .join("\n")
+    .trim();
+}
+
 // ---------------------------------------------------------------------------
 // Main — async, uses Haiku for fast text generation
 // ---------------------------------------------------------------------------
@@ -322,6 +441,13 @@ export async function generatePrompt(
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
 
   const client = new Anthropic({ apiKey });
+
+  if (preferences.platform === "claude") {
+    const prompt = await generateClaudePrompt(
+      url, visionResult, lighthouseData, preferences, html, branding, client
+    );
+    return { prompt };
+  }
 
   const designSystem = runDesignSystem(visionResult.page_summary);
   const userText = buildUserInput(url, visionResult, lighthouseData, preferences, designSystem, html);
@@ -340,4 +466,35 @@ export async function generatePrompt(
     .trim();
 
   return { prompt };
+}
+
+async function generateClaudePrompt(
+  url: string,
+  visionResult: VisionResult,
+  lighthouseData: LighthouseResult | null,
+  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string },
+  html: string,
+  branding: BrandingProfile | null,
+  client: Anthropic
+): Promise<string> {
+  const designSystem = runDesignSystem(visionResult.page_summary);
+  const userText = buildClaudeUserInput(
+    url, visionResult, lighthouseData, preferences, designSystem, html, branding
+  );
+
+  const response = await client.messages.create({
+    model: "claude-sonnet-4-5",
+    max_tokens: 3500,
+    system: buildClaudeSystemPrompt(),
+    messages: [{ role: "user", content: userText }],
+  });
+
+  const basePrompt = response.content
+    .filter(b => b.type === "text")
+    .map(b => (b as { type: "text"; text: string }).text)
+    .join("")
+    .trim();
+
+  const appendix = buildSkillsAppendix(visionResult.scores);
+  return `${basePrompt}\n\n${appendix}`;
 }
