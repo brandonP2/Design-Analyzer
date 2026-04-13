@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import type { BrandingProfile } from "@/lib/tools/extract";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,6 +43,7 @@ interface AnalysisResult {
     summary: string;
   };
   prompt: string;
+  branding: BrandingProfile | null;
 }
 
 type Phase =
@@ -62,6 +64,13 @@ const STEP_PROGRESS: Record<string, number> = {
   prompt: 88,
   done: 100,
 };
+
+const KEEP_OPTIONS: { id: string; label: string; description: string }[] = [
+  { id: "typography", label: "Typography", description: "Keep your current fonts and type scale" },
+  { id: "colors",     label: "Color palette", description: "Keep your current colors" },
+  { id: "spacing",    label: "Spacing rhythm", description: "Keep your current spacing system" },
+  { id: "structure",  label: "Overall structure", description: "Don't change the layout" },
+];
 
 const CATEGORIES: { key: keyof Omit<DesignScores, "overall">; label: string }[] = [
   { key: "colors",        label: "Colors" },
@@ -401,6 +410,12 @@ export default function Home() {
   const [url, setUrl] = useState("");
   const [phase, setPhase] = useState<Phase>({ kind: "idle" });
   const abortRef = useRef<AbortController | null>(null);
+  const [keep, setKeep] = useState<string[]>([]);
+  const [platform, setPlatform] = useState<"lovable" | "bolt" | "claude">("lovable");
+
+  function toggleKeep(id: string) {
+    setKeep(prev => prev.includes(id) ? prev.filter(k => k !== id) : [...prev, id]);
+  }
 
   const analyze = async () => {
     const trimmed = url.trim();
@@ -416,7 +431,16 @@ export default function Home() {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: trimmed }),
+        body: JSON.stringify({
+          url: trimmed,
+          preferences: {
+            style: "modern",
+            goal: "conversion",
+            tone: "professional",
+            keep,
+            platform,
+          },
+        }),
         signal: abort.signal,
       });
 
@@ -485,31 +509,102 @@ export default function Home() {
         </div>
 
         {/* Input */}
-        <div className="flex gap-2">
-          <input
-            type="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !isLoading && analyze()}
-            placeholder="https://your-site.lovable.app"
-            disabled={isLoading}
-            className="flex-1 h-10 px-3.5 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-gray-300 focus:border-gray-300 disabled:opacity-50 transition-all"
-          />
-          {phase.kind === "done" ? (
-            <button
-              onClick={reset}
-              className="h-10 px-4 rounded-lg text-sm font-medium text-gray-500 border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
-            >
-              Reset
-            </button>
-          ) : (
-            <button
-              onClick={analyze}
-              disabled={isLoading || !url.trim()}
-              className="h-10 px-5 rounded-lg text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-            >
-              {isLoading ? "Analyzing…" : "Analyze"}
-            </button>
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !isLoading && analyze()}
+              placeholder="https://your-site.lovable.app"
+              disabled={isLoading}
+              className="flex-1 h-10 px-3.5 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-gray-300 focus:border-gray-300 disabled:opacity-50 transition-all"
+            />
+            {phase.kind === "done" ? (
+              <button
+                onClick={reset}
+                className="h-10 px-4 rounded-lg text-sm font-medium text-gray-500 border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
+              >
+                Reset
+              </button>
+            ) : (
+              <button
+                onClick={analyze}
+                disabled={isLoading || !url.trim()}
+                className="h-10 px-5 rounded-lg text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                {isLoading ? "Analyzing…" : "Analyze"}
+              </button>
+            )}
+          </div>
+
+          {phase.kind === "idle" && (
+            <>
+              {/* ── What to keep ───────────────────────────────────────────── */}
+              <div className="space-y-3 pt-2">
+                <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+                  What do you want to keep?
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {KEEP_OPTIONS.map(opt => (
+                    <label
+                      key={opt.id}
+                      className={`flex items-start gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
+                        keep.includes(opt.id)
+                          ? "border-gray-400 bg-gray-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={keep.includes(opt.id)}
+                        onChange={() => toggleKeep(opt.id)}
+                        className="mt-0.5 accent-gray-700"
+                      />
+                      <span className="text-sm">
+                        <span className="font-medium text-gray-800">{opt.label}</span>
+                        <span className="block text-gray-500 text-xs">{opt.description}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {/* Custom keep field */}
+                <input
+                  type="text"
+                  placeholder="Custom: e.g. keep the hero image position"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400"
+                  onBlur={e => {
+                    const val = e.target.value.trim();
+                    if (val && !keep.includes(`custom: ${val}`)) {
+                      setKeep(prev => [...prev.filter(k => !k.startsWith("custom:")), `custom: ${val}`]);
+                    }
+                  }}
+                />
+              </div>
+
+              {/* ── Platform toggle ─────────────────────────────────────────── */}
+              <div className="space-y-2 pt-1">
+                <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+                  Build platform
+                </p>
+                <div className="flex gap-2">
+                  {(["lovable", "bolt", "claude"] as const).map(p => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setPlatform(p)}
+                      className={`flex-1 py-2 px-3 text-sm rounded-lg border transition-colors capitalize ${
+                        platform === p
+                          ? "border-gray-700 bg-gray-700 text-white"
+                          : "border-gray-200 text-gray-600 hover:border-gray-400"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
         </div>
 
