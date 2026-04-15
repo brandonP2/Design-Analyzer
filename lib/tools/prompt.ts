@@ -6,6 +6,7 @@ import type { TextBlock } from "@anthropic-ai/sdk/resources/messages";
 import type { DesignScore, VisionResult } from "./vision";
 import type { LighthouseResult } from "./lighthouse";
 import type { BrandingProfile } from "./extract";
+import { getDomainBlock, type SiteType } from "../../data/domain-playbooks";
 
 export interface PromptResult {
   prompt: string;
@@ -234,10 +235,11 @@ Given a structured design analysis with scores, findings, page content, and comp
    - **CHANGE**: numbered list ordered by priority. Each item: [impact/effort] + specific issue + specific fix with CSS values
    - **COMPONENTS TO UPGRADE**: for each, name the target section, the component name from 21st.dev, and WHY it solves the specific problem observed
    - **CONSTRAINTS**: WCAG AA, mobile responsive, performance notes
-4. CHANGE items should have 5-8 entries, not fewer. Cover all weak categories.
-5. COMPONENTS TO UPGRADE: only include components from the provided list that would make a meaningful visual difference. Explain the before→after for each.
-6. DESIGN SYSTEM: extract colors from what you observe + what needs to change. Build a coherent palette, don't just list random hex values.
-7. Output ONLY the prompt text — no preamble, no markdown fences, no explanation.
+4. CHANGE items must have 5–8 entries. Cover all weak categories. Every item must address structure, hierarchy, content, or conversion — requiring a section rebuild or content rewrite. Animations and visual polish are allowed but cannot exceed 1–2 items out of the total.
+5. The DOMAIN PRIORITIES block lists the most impactful structural improvements for this site type. Every section in REQUIRED IN OUTPUT must appear in either a CHANGE item or a COMPONENTS TO UPGRADE entry.
+6. COMPONENTS TO UPGRADE: only include components from the provided list that would make a meaningful visual difference. Explain the before→after for each.
+7. DESIGN SYSTEM: extract colors from what you observe + what needs to change. Build a coherent palette, don't just list random hex values.
+8. Output ONLY the prompt text — no preamble, no markdown fences, no explanation.
 
 ## Example of an excellent prompt
 
@@ -260,9 +262,10 @@ Given a structured design analysis, write a precise build session brief that a d
    - **CHANGE**: numbered list ordered by priority. Each item must be phrased as an exact message for the developer to send to Claude. Format each item as: "[impact/effort] Tell Claude: '[exact instruction with CSS values and context]'"
    - **COMPONENTS TO UPGRADE**: for each component, write: "For [section name]: tell Claude to search 21st.dev for [component name] and implement it. If you have /design-html, run: /design-html [brief component spec]"
    - Do NOT write a SKILLS section — it will be appended automatically.
-4. CHANGE items should have 5–8 entries. Cover all weak-scoring categories.
-5. DESIGN SYSTEM: extract colors from what's observed + what needs to change. Build a coherent palette.
-6. Output ONLY the prompt text — no preamble, no markdown fences, no explanation.
+4. CHANGE items must have 5–8 entries. Cover all weak-scoring categories. Every item must address structure, hierarchy, content, or conversion — a section rebuild or content rewrite. Animations and visual polish are allowed but cannot exceed 1–2 items.
+5. The DOMAIN PRIORITIES block lists the most impactful structural improvements for this site type. Every section in REQUIRED IN OUTPUT must appear in either a CHANGE item or a COMPONENTS TO UPGRADE entry.
+6. DESIGN SYSTEM: extract colors from what's observed + what needs to change. Build a coherent palette.
+7. Output ONLY the prompt text — no preamble, no markdown fences, no explanation.
 
 ## Example of an excellent Claude-mode CHANGE item
 
@@ -281,7 +284,7 @@ function buildUserInput(
   url: string,
   vision: VisionResult,
   lighthouseData: LighthouseResult | null,
-  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string },
+  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string; siteType?: SiteType },
   designSystem: string | null,
   markdown: string,
   branding: BrandingProfile | null
@@ -323,6 +326,7 @@ function buildUserInput(
   const markdownSection = markdown ? `\nPAGE CONTENT:\n${markdown.slice(0, 3000)}\n` : "";
 
   const brandingBlock = buildBrandingBlock(branding);
+  const domainBlock = getDomainBlock(preferences.siteType);
 
   const comps = matchComponents(scores);
   const compsBlock = comps.length > 0
@@ -337,6 +341,7 @@ function buildUserInput(
     `Page: ${page_summary}`,
     `Score: ${scores.overall}/100 | Style: ${style} | Goal: ${goal} | Tone: ${tone}`,
     contrastLine,
+    domainBlock,
     brandingBlock,
     markdownSection,
     keepList.length ? `${keep.length > 0 ? "PRESERVE (user wants to keep)" : "STRONG (score ≥75)"}: ${keepList.join(", ")}` : "",
@@ -358,7 +363,7 @@ function buildClaudeUserInput(
   url: string,
   vision: VisionResult,
   lighthouseData: LighthouseResult | null,
-  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string },
+  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string; siteType?: SiteType },
   designSystem: string | null,
   markdown: string,
   branding: BrandingProfile | null
@@ -394,6 +399,7 @@ function buildClaudeUserInput(
     : "";
 
   const brandingBlock = buildBrandingBlock(branding);
+  const domainBlock = getDomainBlock(preferences.siteType);
 
   const dsBlock = designSystem ? `\nDESIGN SYSTEM RECOMMENDATION:\n${designSystem}\n` : "";
 
@@ -410,6 +416,7 @@ function buildClaudeUserInput(
     `Page: ${page_summary}`,
     `Score: ${scores.overall}/100 | Style: ${style} | Goal: ${goal} | Tone: ${tone}`,
     contrastLine,
+    domainBlock,
     brandingBlock,
     markdownSection,
     keepList.length ? `PRESERVE (user wants to keep): ${keepList.join(", ")}` : "",
@@ -435,7 +442,7 @@ export async function generatePrompt(
   url: string,
   visionResult: VisionResult,
   lighthouseData: LighthouseResult | null,
-  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string } = {},
+  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string; siteType?: SiteType } = {},
   markdown: string = "",
   branding: BrandingProfile | null = null,
   links: string[] = []
@@ -475,7 +482,7 @@ async function generateClaudePrompt(
   url: string,
   visionResult: VisionResult,
   lighthouseData: LighthouseResult | null,
-  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string },
+  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string; siteType?: SiteType },
   markdown: string,
   branding: BrandingProfile | null,
   links: string[],
