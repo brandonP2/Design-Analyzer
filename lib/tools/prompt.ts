@@ -419,7 +419,7 @@ function buildClaudeUserInput(
     domainBlock,
     brandingBlock,
     markdownSection,
-    keepList.length ? `PRESERVE (user wants to keep): ${keepList.join(", ")}` : "",
+    keepList.length ? `${keep.length > 0 ? "PRESERVE (user wants to keep)" : "STRONG (score ≥75)"}: ${keepList.join(", ")}` : "",
     weakList.length ? `WEAK (needs work): ${weakList.join(", ")}` : "",
     dsBlock,
     "PRIORITY FIXES:",
