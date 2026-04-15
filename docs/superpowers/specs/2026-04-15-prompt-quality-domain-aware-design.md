@@ -17,53 +17,34 @@ Two root causes:
 
 ## Solution
 
-**Approach B + system prompt hardening:**
+**User-provided site type + domain playbooks + system prompt hardening:**
 
-1. Add a `classify.ts` tool that detects site type and key elements from the scraped content.
-2. Load a domain playbook for the detected site type and inject it into the prompt context.
-3. Harden both system prompts to require structural/content/conversion changes and prevent animations-only outputs.
+1. Add a `siteType` field to the UI preferences panel — the user selects their site type before running the analysis.
+2. Thread `siteType` through the API schema and into the prompt generation step.
+3. Load a domain playbook for the selected site type and inject it into the Haiku/Sonnet context.
+4. Harden both system prompts to require structural/content/conversion changes.
+
+No LLM classification step needed. The user knows their site better than any classifier, and this eliminates an extra API call entirely.
 
 ---
 
 ## Architecture
 
-The pipeline gets one new step inserted between vision and prompt:
+No pipeline changes. `siteType` flows through preferences like `platform` already does:
 
 ```
-extract → lighthouse → vision → [NEW: classify] → prompt
+extract → lighthouse → vision → prompt
+                                  ↑
+                     siteType from UI preferences (user-provided)
 ```
-
-`classify` is a fast Haiku call (~200 tokens in/out). It runs sequentially after vision (needs `page_summary`) and adds ~1–2s latency. It never blocks the pipeline — it falls back to `{ siteType: "other", ... }` on any error.
 
 ---
 
-## New File: `lib/tools/classify.ts`
-
-### Types
+## Type
 
 ```typescript
 export type SiteType = "ecommerce" | "saas" | "portfolio" | "blog" | "agency" | "other";
-
-export interface PageClassification {
-  siteType: SiteType;
-  keyElements: string[];  // e.g. ["product cards", "cart", "reviews"]
-  primaryGoal: string;    // e.g. "sell products"
-}
 ```
-
-### Exported function
-
-```typescript
-export async function classifyPage(
-  pageSummary: string,
-  markdown: string
-): Promise<PageClassification>
-```
-
-- Uses `claude-haiku-4-5-20251001` with `max_tokens: 256`
-- Sends `page_summary + markdown.slice(0, 1500)` as user input
-- Returns parsed JSON matching `PageClassification`
-- On any error (parse failure, API error, timeout): returns `{ siteType: "other", keyElements: [], primaryGoal: "improve design" }` — never throws
 
 ---
 
@@ -73,9 +54,11 @@ Maps each `SiteType` to a `DomainPlaybook`:
 
 ```typescript
 interface DomainPlaybook {
-  priorities: string[];       // high-impact structural improvements for this site type
-  required_sections: string[]; // sections that MUST appear in CHANGE or COMPONENTS
+  priorities: string[];        // high-impact structural improvements for this site type
+  required_sections: string[]; // must appear in either a CHANGE item or COMPONENTS TO UPGRADE entry
 }
+
+export const DOMAIN_PLAYBOOKS: Record<SiteType, DomainPlaybook> = { ... }
 ```
 
 ### Playbooks (initial set)
@@ -106,67 +89,80 @@ interface DomainPlaybook {
 
 ---
 
-## Changes to `lib/tools/prompt.ts`
+## Changes to `app/page.tsx`
 
-### 1. `generatePrompt` signature
+Add a "Site type" dropdown to the existing preferences panel (alongside style/goal/tone/platform/keep):
 
-Add `classification: PageClassification` parameter:
+```
+What type of website is this?
+[ E-commerce ▾ ]   (options: E-commerce, SaaS, Portfolio, Blog, Agency, Other)
+```
+
+- Defaults to "other"
+- Label: "Site type" — no explanation needed, it's self-evident
+- Value sent in the `preferences.siteType` field of the POST body
+
+---
+
+## Changes to `app/api/analyze/route.ts`
+
+Add `siteType` to the Zod preferences schema:
 
 ```typescript
-export async function generatePrompt(
-  url: string,
-  visionResult: VisionResult,
-  lighthouseData: LighthouseResult | null,
-  preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string },
-  markdown: string,
-  branding: BrandingProfile | null,
-  links: string[],
-  classification: PageClassification  // NEW
-): Promise<PromptResult>
+siteType: z.enum(["ecommerce", "saas", "portfolio", "blog", "agency", "other"]).default("other"),
+```
+
+Pass it through to `generatePrompt` via `preferences`.
+
+---
+
+## Changes to `lib/tools/prompt.ts`
+
+### 1. `generatePrompt` preferences type
+
+```typescript
+preferences: {
+  style?: string;
+  goal?: string;
+  tone?: string;
+  keep?: string[];
+  platform?: string;
+  siteType?: SiteType;  // NEW
+}
 ```
 
 ### 2. `buildUserInput` and `buildClaudeUserInput`
 
-Both receive `classification: PageClassification` and inject a `domainBlock`:
+Both look up the playbook for `preferences.siteType` (defaulting to `"other"`) and inject a `domainBlock` after the scores block, before PRIORITY FIXES:
 
 ```
 SITE TYPE: ecommerce
-PRIMARY GOAL: sell products
-KEY ELEMENTS: product cards, cart, reviews
 DOMAIN PRIORITIES:
 - Product card redesign — image quality, price hierarchy, add-to-cart prominence
 - Trust signals — reviews count, star ratings, security badges near checkout
 - Urgency/scarcity — stock levels, limited-time offers above the fold
 - Cart and checkout flow — reduce steps, surface progress indicator
 - Social proof — testimonials, purchase counts, UGC photos
+REQUIRED IN OUTPUT: product cards, cart CTA, trust badges, social proof
 ```
 
-The `domainBlock` is inserted after the scores block, before PRIORITY FIXES. `required_sections` are appended to the block as: `REQUIRED IN OUTPUT: product cards, cart CTA, trust badges, social proof` — the system prompt instructs the LLM that each of these must appear in either a CHANGE item or a COMPONENTS TO UPGRADE entry.
+The system prompt instructs the LLM that each `required_sections` entry must appear in either a CHANGE item or a COMPONENTS TO UPGRADE entry.
 
 ### 3. System prompt hardening
 
-Both `buildSystemPrompt()` and `buildClaudeSystemPrompt()` receive an updated CHANGE rule:
+Both `buildSystemPrompt()` and `buildClaudeSystemPrompt()` get the CHANGE rule updated:
 
 > "CHANGE items must include structural, content, and conversion improvements — things that require rebuilding a section or rewriting content. Animations and visual polish are allowed but cannot represent more than 1–2 items. Every prompt must have at least 3 items that address structure, hierarchy, content, or conversion."
 
 ---
 
-## Changes to `app/api/analyze/route.ts`
-
-1. Import `classifyPage` from `lib/tools/classify`
-2. After `analyzeWithVision` completes, call `classifyPage(visionResult.page_summary, extractResult.markdown)`
-3. Pass `classification` to `generatePrompt`
-4. Reuse the existing `prompt` progress step message — no new SSE step needed (classify is fast and internal)
-
----
-
 ## Acceptance Criteria
 
-- [ ] `classifyPage` returns the correct `siteType` for an e-commerce URL test
-- [ ] The domain playbook block appears in the Haiku/Sonnet context (visible in debug logs)
-- [ ] Generated CHANGE items for an e-commerce site include at least one of: product cards, trust signals, social proof, cart flow
+- [ ] "Site type" dropdown appears in the preferences panel with 6 options, defaulting to "Other"
+- [ ] `siteType` is validated in the API schema and threads through to `generatePrompt`
+- [ ] The domain playbook block appears in the LLM context for a non-"other" site type
+- [ ] Generated CHANGE items for an e-commerce analysis include at least one of: product cards, trust signals, social proof, cart flow
 - [ ] Generated CHANGE items include ≥3 structural/content changes (not just animations)
-- [ ] `classifyPage` error does not break the pipeline — falls back to `other` silently
 - [ ] TypeScript builds without errors (`npx tsc --noEmit`)
 
 ---
@@ -175,8 +171,7 @@ Both `buildSystemPrompt()` and `buildClaudeSystemPrompt()` receive an updated CH
 
 | File | Action |
 |------|--------|
-| `lib/tools/classify.ts` | Create |
 | `data/domain-playbooks.ts` | Create |
-| `lib/tools/prompt.ts` | Modify — add classification param, domain block, system prompt hardening |
-| `app/api/analyze/route.ts` | Modify — call classify, thread classification through |
-| `lib/tools/index.ts` | Modify — re-export from classify.ts |
+| `app/page.tsx` | Modify — add siteType dropdown to preferences panel |
+| `app/api/analyze/route.ts` | Modify — add siteType to Zod schema, thread through |
+| `lib/tools/prompt.ts` | Modify — add siteType to preferences, domain block, system prompt hardening |
