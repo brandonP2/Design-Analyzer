@@ -72,6 +72,15 @@ const KEEP_OPTIONS: { id: string; label: string; description: string }[] = [
   { id: "structure",  label: "Overall structure", description: "Don't change the layout" },
 ];
 
+const SITE_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: "other",     label: "Other / General" },
+  { value: "ecommerce", label: "E-commerce" },
+  { value: "saas",      label: "SaaS / App" },
+  { value: "portfolio", label: "Portfolio" },
+  { value: "blog",      label: "Blog" },
+  { value: "agency",    label: "Agency" },
+];
+
 const CATEGORIES: { key: keyof Omit<DesignScores, "overall">; label: string }[] = [
   { key: "colors",        label: "Colors" },
   { key: "typography",    label: "Typography" },
@@ -450,6 +459,7 @@ export default function Home() {
   const abortRef = useRef<AbortController | null>(null);
   const [keep, setKeep] = useState<string[]>([]);
   const [platform, setPlatform] = useState<"lovable" | "bolt" | "claude">("lovable");
+  const [siteType, setSiteType] = useState("other");
   const [customKeep, setCustomKeep] = useState("");
 
   function toggleKeep(id: string) {
@@ -478,6 +488,7 @@ export default function Home() {
             tone: "professional",
             keep,
             platform,
+            siteType,
           },
         }),
         signal: abort.signal,
@@ -529,6 +540,7 @@ export default function Home() {
     setUrl("");
     setKeep([]);
     setPlatform("lovable");
+    setSiteType("other");
     setCustomKeep("");
   };
 
@@ -649,6 +661,22 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* ── Site type ───────────────────────────────────────────── */}
+              <div className="space-y-2 pt-1">
+                <p className="text-xs text-gray-500 uppercase tracking-wider font-medium">
+                  Site type
+                </p>
+                <select
+                  value={siteType}
+                  onChange={e => setSiteType(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-700 focus:outline-none focus:bg-white focus:ring-1 focus:ring-gray-300 focus:border-gray-300 transition-all"
+                >
+                  {SITE_TYPE_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
               </div>
             </>
           )}
