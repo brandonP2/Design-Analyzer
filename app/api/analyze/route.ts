@@ -168,8 +168,9 @@ export async function POST(request: Request): Promise<Response> {
           visionResult,
           lighthouseResult,
           preferences,
-          extractResult.html,
-          extractResult.branding
+          extractResult.markdown,
+          extractResult.branding,
+          extractResult.links
         );
 
         // ── Done ──────────────────────────────────────────────────────────────

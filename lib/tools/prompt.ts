@@ -74,48 +74,48 @@ These are enhancements — the prompt works without them.
 }
 
 // ---------------------------------------------------------------------------
-// extractHtmlStructure — pull headings, CTAs, and nav links from raw HTML
+// buildBrandingBlock — format detected branding into a prompt section
 // ---------------------------------------------------------------------------
 
-function extractHtmlStructure(html: string): string {
-  if (!html) return "";
+function buildBrandingBlock(branding: BrandingProfile | null): string {
+  if (!branding?.colors) return "";
 
-  const headings: string[] = [];
-  const ctas: string[] = [];
-  const navLinks: string[] = [];
+  const colorParts = [
+    branding.colors.primary && `primary=${branding.colors.primary}`,
+    branding.colors.secondary && `secondary=${branding.colors.secondary}`,
+    branding.colors.accent && `accent=${branding.colors.accent}`,
+    branding.colors.background && `background=${branding.colors.background}`,
+    branding.colors.textPrimary && `text=${branding.colors.textPrimary}`,
+    branding.colors.textSecondary && `textSecondary=${branding.colors.textSecondary}`,
+    branding.colors.link && `link=${branding.colors.link}`,
+  ].filter(Boolean).join(", ");
 
-  // Headings (h1-h3)
-  const hRe = /<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi;
-  let m: RegExpExecArray | null;
-  while ((m = hRe.exec(html)) !== null) {
-    const text = m[2].replace(/<[^>]+>/g, "").trim();
-    if (text) headings.push(`H${m[1]}: ${text}`);
-  }
+  const fontParts = branding.fonts?.map(f => f.family).join(", ") ?? "unknown";
 
-  // Buttons and CTA-like links
-  const btnRe = /<(?:button|a)[^>]*class="[^"]*(?:btn|cta|button|primary)[^"]*"[^>]*>([\s\S]*?)<\/(?:button|a)>/gi;
-  while ((m = btnRe.exec(html)) !== null) {
-    const text = m[1].replace(/<[^>]+>/g, "").trim();
-    if (text && text.length < 60) ctas.push(text);
-  }
+  const typo = branding.typography;
+  const typoParts = typo ? [
+    typo.fontSizes?.h1 && `h1=${typo.fontSizes.h1}`,
+    typo.fontSizes?.h2 && `h2=${typo.fontSizes.h2}`,
+    typo.fontSizes?.body && `body=${typo.fontSizes.body}`,
+    typo.fontWeights?.regular !== undefined && `weight-regular=${typo.fontWeights.regular}`,
+    typo.fontWeights?.bold !== undefined && `weight-bold=${typo.fontWeights.bold}`,
+    typo.lineHeights?.body !== undefined && `lineHeight=${typo.lineHeights.body}`,
+  ].filter(Boolean).join(", ") : "";
 
-  // Nav links
-  const navRe = /<nav[^>]*>([\s\S]*?)<\/nav>/gi;
-  while ((m = navRe.exec(html)) !== null) {
-    const linkRe = /<a[^>]*>([\s\S]*?)<\/a>/gi;
-    let lm: RegExpExecArray | null;
-    while ((lm = linkRe.exec(m[1])) !== null) {
-      const text = lm[1].replace(/<[^>]+>/g, "").trim();
-      if (text && text.length < 40) navLinks.push(text);
-    }
-  }
+  const spacingParts = branding.spacing ? [
+    branding.spacing.baseUnit !== undefined && `baseUnit=${branding.spacing.baseUnit}`,
+    branding.spacing.borderRadius && `borderRadius=${branding.spacing.borderRadius}`,
+    branding.spacing.gridGutter !== undefined && `gutter=${branding.spacing.gridGutter}`,
+  ].filter(Boolean).join(", ") : "";
 
-  const parts: string[] = [];
-  if (headings.length) parts.push(`Headings: ${headings.slice(0, 8).join(" | ")}`);
-  if (ctas.length) parts.push(`CTAs: ${[...new Set(ctas)].slice(0, 5).join(" | ")}`);
-  if (navLinks.length) parts.push(`Nav: ${[...new Set(navLinks)].slice(0, 8).join(" | ")}`);
+  const lines = [
+    `Colors: ${colorParts}`,
+    `Fonts: ${fontParts}`,
+    typoParts && `Typography: ${typoParts}`,
+    spacingParts && `Spacing: ${spacingParts}`,
+  ].filter(Boolean).join("\n");
 
-  return parts.join("\n");
+  return `\nDETECTED BRANDING:\n${lines}\n`;
 }
 
 interface ComponentEntry {
@@ -283,7 +283,8 @@ function buildUserInput(
   lighthouseData: LighthouseResult | null,
   preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string },
   designSystem: string | null,
-  html: string
+  markdown: string,
+  branding: BrandingProfile | null
 ): string {
   const { scores, findings, improvements_ranked, page_summary } = vision;
   const style = preferences.style ?? "modern";
@@ -319,10 +320,9 @@ function buildUserInput(
     ? `\nDESIGN SYSTEM RECOMMENDATION:\n${designSystem}\n`
     : "";
 
-  const htmlBlock = extractHtmlStructure(html);
-  const htmlSection = htmlBlock
-    ? `\nPAGE CONTENT (from HTML):\n${htmlBlock}\n`
-    : "";
+  const markdownSection = markdown ? `\nPAGE CONTENT:\n${markdown.slice(0, 3000)}\n` : "";
+
+  const brandingBlock = buildBrandingBlock(branding);
 
   const comps = matchComponents(scores);
   const compsBlock = comps.length > 0
@@ -337,7 +337,8 @@ function buildUserInput(
     `Page: ${page_summary}`,
     `Score: ${scores.overall}/100 | Style: ${style} | Goal: ${goal} | Tone: ${tone}`,
     contrastLine,
-    htmlSection,
+    brandingBlock,
+    markdownSection,
     keepList.length ? `${keep.length > 0 ? "PRESERVE (user wants to keep)" : "STRONG (score ≥75)"}: ${keepList.join(", ")}` : "",
     weakList.length ? `WEAK (needs work): ${weakList.join(", ")}` : "",
     dsBlock,
@@ -359,7 +360,7 @@ function buildClaudeUserInput(
   lighthouseData: LighthouseResult | null,
   preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string },
   designSystem: string | null,
-  html: string,
+  markdown: string,
   branding: BrandingProfile | null
 ): string {
   const { scores, findings, improvements_ranked, page_summary } = vision;
@@ -392,14 +393,11 @@ function buildClaudeUserInput(
     ? `Lighthouse contrast: ${lighthouseData.colorContrast.score === 1 ? "PASS" : lighthouseData.colorContrast.score === 0 ? `FAIL (${lighthouseData.colorContrast.failingItems.length} elements)` : "unknown"}`
     : "";
 
-  const brandingBlock = branding?.colors
-    ? `\nDETECTED BRANDING:\nColors: primary=${branding.colors.primary ?? "unknown"}, background=${branding.colors.background ?? "unknown"}, text=${branding.colors.textPrimary ?? "unknown"}\nFonts: ${branding.fonts?.map(f => f.family).join(", ") ?? "unknown"}\n`
-    : "";
+  const brandingBlock = buildBrandingBlock(branding);
 
   const dsBlock = designSystem ? `\nDESIGN SYSTEM RECOMMENDATION:\n${designSystem}\n` : "";
 
-  const htmlBlock = extractHtmlStructure(html);
-  const htmlSection = htmlBlock ? `\nPAGE CONTENT (from HTML):\n${htmlBlock}\n` : "";
+  const markdownSection = markdown ? `\nPAGE CONTENT:\n${markdown.slice(0, 3000)}\n` : "";
 
   const comps = matchComponents(scores);
   const compsBlock = comps.length > 0
@@ -413,7 +411,7 @@ function buildClaudeUserInput(
     `Score: ${scores.overall}/100 | Style: ${style} | Goal: ${goal} | Tone: ${tone}`,
     contrastLine,
     brandingBlock,
-    htmlSection,
+    markdownSection,
     keepList.length ? `PRESERVE (user wants to keep): ${keepList.join(", ")}` : "",
     weakList.length ? `WEAK (needs work): ${weakList.join(", ")}` : "",
     dsBlock,
@@ -438,8 +436,9 @@ export async function generatePrompt(
   visionResult: VisionResult,
   lighthouseData: LighthouseResult | null,
   preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string } = {},
-  html: string = "",
-  branding: BrandingProfile | null = null
+  markdown: string = "",
+  branding: BrandingProfile | null = null,
+  links: string[] = []
 ): Promise<PromptResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
@@ -448,13 +447,13 @@ export async function generatePrompt(
 
   if (preferences.platform === "claude") {
     const prompt = await generateClaudePrompt(
-      url, visionResult, lighthouseData, preferences, html, branding, client
+      url, visionResult, lighthouseData, preferences, markdown, branding, links, client
     );
     return { prompt };
   }
 
   const designSystem = runDesignSystem(visionResult.page_summary);
-  const userText = buildUserInput(url, visionResult, lighthouseData, preferences, designSystem, html);
+  const userText = buildUserInput(url, visionResult, lighthouseData, preferences, designSystem, markdown, branding);
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-5",
@@ -477,13 +476,14 @@ async function generateClaudePrompt(
   visionResult: VisionResult,
   lighthouseData: LighthouseResult | null,
   preferences: { style?: string; goal?: string; tone?: string; keep?: string[]; platform?: string },
-  html: string,
+  markdown: string,
   branding: BrandingProfile | null,
+  links: string[],
   client: Anthropic
 ): Promise<string> {
   const designSystem = runDesignSystem(visionResult.page_summary);
   const userText = buildClaudeUserInput(
-    url, visionResult, lighthouseData, preferences, designSystem, html, branding
+    url, visionResult, lighthouseData, preferences, designSystem, markdown, branding
   );
 
   const response = await client.messages.create({
